@@ -919,6 +919,35 @@ def calculate_goal_metrics(g: Goal) -> dict:
         "remaining_amount": round(remaining_amount, 2),
         "progress_percentage": round(progress_percentage, 2)
     }
+@app.post("/update-prices")
+def update_prices():
+    db = SessionLocal()
+    try:
+        investments = db.query(Investment).all()
+        symbols = list(set([inv.symbol for inv in investments if inv.symbol]))
+
+        if not symbols:
+            return {"message": "No symbols found"}
+
+        price_data = fetch_prices_batch(symbols)
+
+        for inv in investments:
+            if inv.symbol in price_data:
+                price, timestamp, change = price_data[inv.symbol]
+                if price is not None:
+                    inv.last_price = price
+                    inv.last_price_at = timestamp
+                    inv.current_value = float(inv.units) * price
+                    inv.daily_change = change
+
+        db.commit()
+        return {"message": "Prices updated successfully"}
+
+    except Exception as e:
+        db.rollback()
+        return {"error": str(e)}
+    finally:
+        db.close()
 
 @app.get("/")
 def root():
