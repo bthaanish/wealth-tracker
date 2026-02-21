@@ -7,9 +7,8 @@ passlib[bcrypt]
 python-multipart
 python-dotenv
 yfinance
-celery
-redis
 python-jose[cryptography]
 passlib[bcrypt]
 
 python-dotenv
+
